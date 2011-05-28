@@ -18,6 +18,7 @@ The document describing C Style is available here:
 http://www.cis.upenn.edu/~lee/06cse480/data/cstyle.ms.pdf
 
 Examples of conditions checked by this tool include:
+
 * Strings must be quoted with single quotes.
 * Blocks must be indented with tabs, not spaces.
 * Continuation lines must be indented with 4 spaces.
@@ -28,6 +29,7 @@ Examples of conditions checked by this tool include:
 * Lines must not end with whitespace.
 * Multi-line block comments must start and end with a blank line.
 * Return expressions must be parenthesized.
+
 
 Status
 ------
