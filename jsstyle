@@ -55,7 +55,7 @@ use Getopt::Std;
 use strict;
 
 my $usage =
-"usage: jsstyle [-chvC] [-t <num>][-o constructs] file ...
+"usage: jsstyle [-chvC] [-t <num>] [-o constructs] file ...
 	-c	check continuation indentation inside functions
 	-h	perform heuristic checks that are sometimes wrong
 	-t	specify tab width for line length calculation
