@@ -55,9 +55,10 @@ use Getopt::Std;
 use strict;
 
 my $usage =
-"usage: jsstyle [-chvC] [-o constructs] file ...
+"usage: jsstyle [-chvC] [-t <num>] [-o constructs] file ...
 	-c	check continuation indentation inside functions
 	-h	perform heuristic checks that are sometimes wrong
+	-t	specify tab width for line length calculation
 	-v	verbose
 	-C	don't check anything in header block comments
 	-o constructs
@@ -68,7 +69,7 @@ my $usage =
 
 my %opts;
 
-if (!getopts("cho:vC", \%opts)) {
+if (!getopts("cho:t:vC", \%opts)) {
 	print $usage;
 	exit 2;
 }
@@ -77,6 +78,12 @@ my $check_continuation = $opts{'c'};
 my $heuristic = $opts{'h'};
 my $verbose = $opts{'v'};
 my $ignore_hdr_comment = $opts{'C'};
+my $tab_width = $opts{'t'};
+
+# By default, tabs are 8 characters wide
+if (! defined($opts{'t'})) {
+	$tab_width = 8;
+}
 
 my $doxygen_comments = 0;
 my $splint_comments = 0;
@@ -270,12 +277,13 @@ line: while (<$filehandle>) {
 
 	# check length of line.
 	# first, a quick check to see if there is any chance of being too long.
-	if (($line =~ tr/\t/\t/) * 7 + length($line) > 80) {
+	if ((($line =~ tr/\t/\t/) * ($tab_width - 1)) + length($line) > 80) {
 		# yes, there is a chance.
 		# replace tabs with spaces and check again.
 		my $eline = $line;
 		1 while $eline =~
-		    s/\t+/' ' x (length($&) * 8 - length($`) % 8)/e;
+		    s/\t+/' ' x
+			(length($&) * $tab_width - length($`) % $tab_width)/e;
 		if (length($eline) > 80) {
 			err("line > 80 characters");
 		}
