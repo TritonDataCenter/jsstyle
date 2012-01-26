@@ -50,6 +50,7 @@
 #
 
 require 5.0;
+use feature "switch"; # requires Perl 5.10
 use IO::File;
 use Getopt::Std;
 use strict;
@@ -61,6 +62,8 @@ my $usage =
 	-t	specify tab width for line length calculation
 	-v	verbose
 	-C	don't check anything in header block comments
+	-f CONFIG
+		path to a jsstyle config file
 	-o constructs
 		allow a comma-seperated list of optional constructs:
 		    doxygen	allow doxygen-style block comments (/** /*!)
@@ -69,7 +72,7 @@ my $usage =
 
 my %opts;
 
-if (!getopts("cho:t:vC", \%opts)) {
+if (!getopts("cho:t:f:vC", \%opts)) {
 	print $usage;
 	exit 2;
 }
@@ -87,6 +90,46 @@ if (! defined($opts{'t'})) {
 
 my $doxygen_comments = 0;
 my $splint_comments = 0;
+
+
+# Load config
+my %config = (
+	indent => "tab"
+);
+if (defined($opts{'f'})) {
+	my $path = $opts{'f'};
+	my $fh = new IO::File $path, "r";
+	if (!defined($fh)) {
+		die "cannot open config path '$path'";
+	}
+	my $line = 0;
+	while (<$fh>) {
+		$line++;
+		s/^\s*//;  # drop leading space
+		s/\s*$//;  # drop trailing space
+		next if ! $_;  # skip empty line
+		next if /^#/;  # skip comments
+		if (! /^(\w+)\s*=\s*(.*?)$/) {
+			die "$path:$line: invalid config line: '$_'";
+		}
+		my $name = $1;
+		my $value = $2;
+		# Validate config var.
+		given ($name) {
+			when("indent") {
+				# A number of spaces or "tab".
+				if ($value !~ /^\d+$/ && $value ne "tab") {
+					die "$path:$line: invalid indent ".
+						"'$value', must be a number ".
+						"(of spaces) or 'tab'";
+				}
+			}
+			default { die "$path:$line: unknown config var: $name" }
+		}
+		$config{$name} = $value;
+	}
+}
+
 
 if (defined($opts{'o'})) {
 	for my $x (split /,/, $opts{'o'}) {
