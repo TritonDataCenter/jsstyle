@@ -160,7 +160,9 @@ if ($doxygen_comments) {
 	# doxygen comments look like "/*!" or "/**"; allow them.
 	$hdr_comment_start = qr/^\s*\/\*[\!\*]?$/;
 } else {
-	$hdr_comment_start = qr/^\s*\/\*$/;
+	#XXX What is impact of allowing content after `/* here` on other
+	#    checks?
+	$hdr_comment_start = qr/^\s*\/\*/;
 }
 
 # Note, following must be in single quotes so that \s and \w work right.
@@ -250,6 +252,7 @@ line: while (<$filehandle>) {
 	# double or single quotes, we do not want to check such text.
 
 	$line = $_;
+#print("--\nXXX line '$line'\n");
 
 	#
 	# C allows strings to be continued with a backslash at the end of
@@ -447,14 +450,27 @@ line: while (<$filehandle>) {
 	#    (!/^    \w/ || $in_function != 0)) {
 	#	err("indent by spaces instead of tabs");
 	#}
-	if (/^ {2,}/ && !/^    [^ ]/) {
-		err("indent by spaces instead of tabs");
+	if ($config{"indent"} eq "tab") {
+		if (/^ {2,}/ && !/^    [^ ]/) {
+			err("indent by spaces instead of tabs");
+		}
+	} elsif (/^\t/) {
+		err("indent by tabs instead of spaces")
+	} elsif (/^( +)/ && !$in_comment) {
+		my $indent = $1;
+		if (length($indent) < $config{"indent"}) {
+			err("indent of " . length($indent) .
+				" space(s) instead of " . $config{'indent'});
+		}
 	}
 	if (/^\t+ [^ \t\*]/ || /^\t+  \S/ || /^\t+   \S/) {
 		err("continuation line not indented by 4 spaces");
 	}
 
-	if (/^\s*\/\*./ && !/^\s*\/\*.*\*\// && !/$hdr_comment_start/) {
+	if (/^\s*\/\*./ && !/^\s*\/\*.*\*\//
+	    #XXX Update this for $hdr_comment_start and add config option for this err.
+	    #&& !/$hdr_comment_start/
+	    ) {
 		err("improper first line of block comment");
 	}
 
