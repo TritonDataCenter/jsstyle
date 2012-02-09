@@ -90,16 +90,21 @@ if (! defined($opts{'t'})) {
 
 # Load config
 my %config = (
-	indent => "tab"
+	indent => "tab",
+	doxygen => 0,  	# doxygen comments: /** ... */
+	splint => 0,    # splint comments. Needed?
+	"unparenthesized-return" => 1,
+	"literal-string-quote" => "single",  # 'single', 'double' or 'ignore'
+	"blank-after-start-comment" => 1,
 );
 sub add_config_var ($$) {
 	my ($scope, $str) = @_;
 
-	if ($str !~ /^(\w+)(?:\s*=\s*(.*?))?$/) {
+	if ($str !~ /^([\w-]+)(?:\s*=\s*(.*?))?$/) {
 		die "$scope: invalid option: '$str'";
 	}
 	my $name = $1;
-	my $value = $2 || 1;
+	my $value = ($2 eq '' ? 1 : $2);
 	#print "scope: '$scope', str: '$str', name: '$name', value: '$value'\n";
 
 	# Validate config var.
@@ -109,9 +114,17 @@ sub add_config_var ($$) {
 			die "$scope: invalid '$name': must be a number (of ".
 				"spaces) or 'tab'";
 		}
-	} elsif ($name eq "doxygen" || $name eq "splint") {
-		if ($value != 1) {
+	} elsif ($name eq "doxygen" ||   # boolean vars
+		 $name eq "splint" ||
+		 $name eq "unparenthesized-return" ||
+		 $name eq "blank-after-start-comment") {
+		if ($value != 1 && $value != 0) {
 			die "$scope: invalid '$name': don't give a value";
+		}
+	} elsif ($name eq "literal-string-quote") {
+		if ($value !~ /single|double|ignore/) {
+			die "$scope: invalid '$name': must be 'single' ".
+				"or 'double'";
 		}
 	} else {
 		die "$scope: unknown config var: $name";
@@ -481,7 +494,7 @@ line: while (<$filehandle>) {
 	    !(/$lint_re/ || ($config{"splint"} && /$splint_re/))) {
 		err("missing blank before close comment");
 	}
-	if (/\/\/\S/) {		# C++ comments
+	if ($config{"blank-after-start-comment"} && /\/\/\S/) {	# C++ comments
 		err("missing blank after start comment");
 	}
 	# check for unterminated single line comments, but allow them when
@@ -508,8 +521,15 @@ line: while (<$filehandle>) {
 	s/\s*$//;
 
 	# following checks do not apply to text in comments.
-	if (/"/) {
-		err("literal string using double-quote instead of single");
+	my $quote = $config{"literal-string-quote"};
+	if ($quote eq "single") {
+		if (/"/) {
+			err("literal string using double-quote instead of single");
+		}
+	} elsif ($quote eq "double") {
+		if (/'/) {
+			err("literal string using single-quote instead of double");
+		}
 	}
 
 	if (/[^=!<>\s][!<>=]=/ || /[^<>!=][!<>=]==?[^\s,=]/ ||
@@ -569,7 +589,8 @@ line: while (<$filehandle>) {
 		$_ = $s;
 	}
 
-	if (/^\s*return\W[^;]*;/ && !/^\s*return\s*\(.*\);/) {
+	if ($config{"unparenthesized-return"} &&
+	    /^\s*return\W[^;]*;/ && !/^\s*return\s*\(.*\);/) {
 		err("unparenthesized return expression");
 	}
 	if (/\btypeof\b/ && !/\btypeof\s*\(.*\)/) {
