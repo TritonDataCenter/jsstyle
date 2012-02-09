@@ -55,17 +55,25 @@ use Getopt::Std;
 use strict;
 
 my $usage =
-"usage: jsstyle [-chvC] [-t <num>] [-o constructs] file ...
+"Usage: jsstyle [-hvcC] [-t <num>] [-f <path>] [-o <config>] file ...
+
+Check your JavaScript file for style.
+See <https://github.com/davepacheco/jsstyle> for details on config options.
+Report bugs to <https://github.com/davepacheco/jsstyle/issues>.
+
+Options:
+	-h 	print this help and exit
+	-v	verbose
+	
 	-c	check continuation indentation inside functions
 	-t	specify tab width for line length calculation
-	-v	verbose
 	-C	don't check anything in header block comments
-	-f CONFIG
+	
+	-f PATH
 		path to a jsstyle config file
-	-o constructs
-		allow a comma-seperated list of optional constructs:
-		    doxygen	allow doxygen-style block comments (/** /*!)
-		    splint	allow splint-style lint comments (/*@ ... @*/)
+	-o OPTION1,OPTION2
+		set config options, e.g. '-o doxygen,indent=2'
+
 ";
 
 my %opts;
@@ -73,6 +81,11 @@ my %opts;
 if (!getopts("cho:t:f:vC", \%opts)) {
 	print $usage;
 	exit 2;
+}
+
+if (defined($opts{'h'})) {
+	print $usage;
+	exit;
 }
 
 my $check_continuation = $opts{'c'};
@@ -259,7 +272,6 @@ line: while (<$filehandle>) {
 	# double or single quotes, we do not want to check such text.
 
 	$line = $_;
-#print("--\nXXX line '$line'\n");
 
 	#
 	# C allows strings to be continued with a backslash at the end of
