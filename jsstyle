@@ -105,7 +105,7 @@ my %config = (
 	doxygen => 0,  	# doxygen comments: /** ... */
 	splint => 0,    # splint comments. Needed?
 	"unparenthesized-return" => 1,
-	"literal-string-quote" => "single",  # 'single', 'double' or 'ignore'
+	"literal-string-quote" => "single",  # 'single' or 'double'
 	"blank-after-start-comment" => 1,
 );
 sub add_config_var ($$) {
@@ -133,7 +133,7 @@ sub add_config_var ($$) {
 			die "$scope: invalid '$name': don't give a value";
 		}
 	} elsif ($name eq "literal-string-quote") {
-		if ($value !~ /single|double|ignore/) {
+		if ($value !~ /single|double/) {
 			die "$scope: invalid '$name': must be 'single' ".
 				"or 'double'";
 		}
@@ -508,7 +508,7 @@ line: while (<$filehandle>) {
 	    !(/$lint_re/ || ($config{"splint"} && /$splint_re/))) {
 		err("missing blank before close comment");
 	}
-	if ($config{"blank-after-start-comment"} && /\/\/\S/) {	# C++ comments
+	if ($config{"blank-after-start-comment"} && /(?<!\w:)\/\/\S/) {	# C++ comments
 		err("missing blank after start comment");
 	}
 	# check for unterminated single line comments, but allow them when

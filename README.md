@@ -53,9 +53,8 @@ configurability.
                             This is legacy. Does anyone use this?
     indent=<NUM|tab>        An integer number of spaces for indentation, or
                             'tab' for tab indentation (the default).
-    literal-string-quote    'single' (the default), 'double' or 'ignore'.
-                            Specifies the preferred quote character for
-                            literal strings.
+    literal-string-quote    'single' (the default) or 'double'. Specifies
+                            the preferred quote character for literal strings.
     unparenthesized-return  Boolean option, set to 0 to disable the
                             "unparenthesized return expression" check.
     blank-after-start-comment
