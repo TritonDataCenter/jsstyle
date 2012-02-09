@@ -55,7 +55,7 @@ use Getopt::Std;
 use strict;
 
 my $usage =
-"Usage: jsstyle [-hvcC] [-t <num>] [-f <path>] [-o <config>] file ...
+"Usage: jsstyle [-h?vcC] [-t <num>] [-f <path>] [-o <config>] file ...
 
 Check your JavaScript file for style.
 See <https://github.com/davepacheco/jsstyle> for details on config options.
@@ -78,12 +78,12 @@ Options:
 
 my %opts;
 
-if (!getopts("cho:t:f:vC", \%opts)) {
+if (!getopts("ch?o:t:f:vC", \%opts)) {
 	print $usage;
 	exit 2;
 }
 
-if (defined($opts{'h'})) {
+if (defined($opts{'h'}) || defined($opts{'?'})) {
 	print $usage;
 	exit;
 }
