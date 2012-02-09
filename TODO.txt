@@ -1,0 +1,4 @@
+- ./jsstyle -h -> help
+- ./jsstyle --help -> still looking for input
+- ./jsstyle -f trent.conf -o doxygen examples/comments.js  # working through this
+- ./jsstyle -o option -> merge with config file handling

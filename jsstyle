@@ -160,9 +160,7 @@ if ($doxygen_comments) {
 	# doxygen comments look like "/*!" or "/**"; allow them.
 	$hdr_comment_start = qr/^\s*\/\*[\!\*]?$/;
 } else {
-	#XXX What is impact of allowing content after `/* here` on other
-	#    checks?
-	$hdr_comment_start = qr/^\s*\/\*/;
+	$hdr_comment_start = qr/^\s*\/\*$/;
 }
 
 # Note, following must be in single quotes so that \s and \w work right.
@@ -467,10 +465,8 @@ line: while (<$filehandle>) {
 		err("continuation line not indented by 4 spaces");
 	}
 
-	if (/^\s*\/\*./ && !/^\s*\/\*.*\*\//
-	    #XXX Update this for $hdr_comment_start and add config option for this err.
-	    #&& !/$hdr_comment_start/
-	    ) {
+	# A multi-line block comment must not have content on the first line.
+	if (/^\s*\/\*./ && !/^\s*\/\*.*\*\// && !/$hdr_comment_start/) {
 		err("improper first line of block comment");
 	}
 
