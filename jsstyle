@@ -50,7 +50,6 @@
 #
 
 require 5.0;
-use feature "switch"; # requires Perl 5.10
 use IO::File;
 use Getopt::Std;
 use strict;
@@ -88,14 +87,38 @@ if (! defined($opts{'t'})) {
 	$tab_width = 8;
 }
 
-my $doxygen_comments = 0;
-my $splint_comments = 0;
-
 
 # Load config
 my %config = (
 	indent => "tab"
 );
+sub add_config_var ($$) {
+	my ($scope, $str) = @_;
+
+	if ($str !~ /^(\w+)(?:\s*=\s*(.*?))?$/) {
+		die "$scope: invalid option: '$str'";
+	}
+	my $name = $1;
+	my $value = $2 || 1;
+	#print "scope: '$scope', str: '$str', name: '$name', value: '$value'\n";
+
+	# Validate config var.
+	if ($name eq "indent") {
+		# A number of spaces or "tab".
+		if ($value !~ /^\d+$/ && $value ne "tab") {
+			die "$scope: invalid '$name': must be a number (of ".
+				"spaces) or 'tab'";
+		}
+	} elsif ($name eq "doxygen" || $name eq "splint") {
+		if ($value != 1) {
+			die "$scope: invalid '$name': don't give a value";
+		}
+	} else {
+		die "$scope: unknown config var: $name";
+	}
+	$config{$name} = $value;
+}
+
 if (defined($opts{'f'})) {
 	my $path = $opts{'f'};
 	my $fh = new IO::File $path, "r";
@@ -109,41 +132,16 @@ if (defined($opts{'f'})) {
 		s/\s*$//;  # drop trailing space
 		next if ! $_;  # skip empty line
 		next if /^#/;  # skip comments
-		if (! /^(\w+)\s*=\s*(.*?)$/) {
-			die "$path:$line: invalid config line: '$_'";
-		}
-		my $name = $1;
-		my $value = $2;
-		# Validate config var.
-		given ($name) {
-			when("indent") {
-				# A number of spaces or "tab".
-				if ($value !~ /^\d+$/ && $value ne "tab") {
-					die "$path:$line: invalid indent ".
-						"'$value', must be a number ".
-						"(of spaces) or 'tab'";
-				}
-			}
-			default { die "$path:$line: unknown config var: $name" }
-		}
-		$config{$name} = $value;
+		add_config_var "$path:$line", $_;
 	}
 }
-
 
 if (defined($opts{'o'})) {
 	for my $x (split /,/, $opts{'o'}) {
-		if ($x eq "doxygen") {
-			$doxygen_comments = 1;
-		} elsif ($x eq "splint") {
-			$splint_comments = 1;
-		} else {
-			print "jsstyle: unrecognized construct \"$x\"\n";
-			print $usage;
-			exit 2;
-		}
+		add_config_var "'-o' option", $x;
 	}
 }
+
 
 my ($filename, $line, $prev);		# shared globals
 
@@ -156,7 +154,7 @@ if ($verbose) {
 	$fmt = "%s: %d: %s\n";
 }
 
-if ($doxygen_comments) {
+if ($config{"doxygen"}) {
 	# doxygen comments look like "/*!" or "/**"; allow them.
 	$hdr_comment_start = qr/^\s*\/\*[\!\*]?$/;
 } else {
@@ -476,11 +474,11 @@ line: while (<$filehandle>) {
 	}
 
 	if ((/[^(]\/\*\S/ || /^\/\*\S/) &&
-	    !(/$lint_re/ || ($splint_comments && /$splint_re/))) {
+	    !(/$lint_re/ || ($config{"splint"} && /$splint_re/))) {
 		err("missing blank after open comment");
 	}
 	if (/\S\*\/[^)]|\S\*\/$/ &&
-	    !(/$lint_re/ || ($splint_comments && /$splint_re/))) {
+	    !(/$lint_re/ || ($config{"splint"} && /$splint_re/))) {
 		err("missing blank before close comment");
 	}
 	if (/\/\/\S/) {		# C++ comments
