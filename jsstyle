@@ -55,27 +55,40 @@ use Getopt::Std;
 use strict;
 
 my $usage =
-"usage: jsstyle [-chvC] [-t <num>] [-o constructs] file ...
-	-c	check continuation indentation inside functions
-	-h	perform heuristic checks that are sometimes wrong
-	-t	specify tab width for line length calculation
+"Usage: jsstyle [-hvcC] [-t <num>] [-f <path>] [-o <config>] file ...
+
+Check your JavaScript file for style.
+See <https://github.com/davepacheco/jsstyle> for details on config options.
+Report bugs to <https://github.com/davepacheco/jsstyle/issues>.
+
+Options:
+	-h 	print this help and exit
 	-v	verbose
+	
+	-c	check continuation indentation inside functions
+	-t	specify tab width for line length calculation
 	-C	don't check anything in header block comments
-	-o constructs
-		allow a comma-seperated list of optional constructs:
-		    doxygen	allow doxygen-style block comments (/** /*!)
-		    splint	allow splint-style lint comments (/*@ ... @*/)
+	
+	-f PATH
+		path to a jsstyle config file
+	-o OPTION1,OPTION2
+		set config options, e.g. '-o doxygen,indent=2'
+
 ";
 
 my %opts;
 
-if (!getopts("cho:t:vC", \%opts)) {
+if (!getopts("cho:t:f:vC", \%opts)) {
 	print $usage;
 	exit 2;
 }
 
+if (defined($opts{'h'})) {
+	print $usage;
+	exit;
+}
+
 my $check_continuation = $opts{'c'};
-my $heuristic = $opts{'h'};
 my $verbose = $opts{'v'};
 my $ignore_hdr_comment = $opts{'C'};
 my $tab_width = $opts{'t'};
@@ -85,22 +98,74 @@ if (! defined($opts{'t'})) {
 	$tab_width = 8;
 }
 
-my $doxygen_comments = 0;
-my $splint_comments = 0;
+
+# Load config
+my %config = (
+	indent => "tab",
+	doxygen => 0,  	# doxygen comments: /** ... */
+	splint => 0,    # splint comments. Needed?
+	"unparenthesized-return" => 1,
+	"literal-string-quote" => "single",  # 'single' or 'double'
+	"blank-after-start-comment" => 1,
+);
+sub add_config_var ($$) {
+	my ($scope, $str) = @_;
+
+	if ($str !~ /^([\w-]+)(?:\s*=\s*(.*?))?$/) {
+		die "$scope: invalid option: '$str'";
+	}
+	my $name = $1;
+	my $value = ($2 eq '' ? 1 : $2);
+	#print "scope: '$scope', str: '$str', name: '$name', value: '$value'\n";
+
+	# Validate config var.
+	if ($name eq "indent") {
+		# A number of spaces or "tab".
+		if ($value !~ /^\d+$/ && $value ne "tab") {
+			die "$scope: invalid '$name': must be a number (of ".
+				"spaces) or 'tab'";
+		}
+	} elsif ($name eq "doxygen" ||   # boolean vars
+		 $name eq "splint" ||
+		 $name eq "unparenthesized-return" ||
+		 $name eq "blank-after-start-comment") {
+		if ($value != 1 && $value != 0) {
+			die "$scope: invalid '$name': don't give a value";
+		}
+	} elsif ($name eq "literal-string-quote") {
+		if ($value !~ /single|double/) {
+			die "$scope: invalid '$name': must be 'single' ".
+				"or 'double'";
+		}
+	} else {
+		die "$scope: unknown config var: $name";
+	}
+	$config{$name} = $value;
+}
+
+if (defined($opts{'f'})) {
+	my $path = $opts{'f'};
+	my $fh = new IO::File $path, "r";
+	if (!defined($fh)) {
+		die "cannot open config path '$path'";
+	}
+	my $line = 0;
+	while (<$fh>) {
+		$line++;
+		s/^\s*//;  # drop leading space
+		s/\s*$//;  # drop trailing space
+		next if ! $_;  # skip empty line
+		next if /^#/;  # skip comments
+		add_config_var "$path:$line", $_;
+	}
+}
 
 if (defined($opts{'o'})) {
 	for my $x (split /,/, $opts{'o'}) {
-		if ($x eq "doxygen") {
-			$doxygen_comments = 1;
-		} elsif ($x eq "splint") {
-			$splint_comments = 1;
-		} else {
-			print "jsstyle: unrecognized construct \"$x\"\n";
-			print $usage;
-			exit 2;
-		}
+		add_config_var "'-o' option", $x;
 	}
 }
+
 
 my ($filename, $line, $prev);		# shared globals
 
@@ -113,7 +178,7 @@ if ($verbose) {
 	$fmt = "%s: %d: %s\n";
 }
 
-if ($doxygen_comments) {
+if ($config{"doxygen"}) {
 	# doxygen comments look like "/*!" or "/**"; allow them.
 	$hdr_comment_start = qr/^\s*\/\*[\!\*]?$/;
 } else {
@@ -362,8 +427,12 @@ line: while (<$filehandle>) {
 	}
 	# does this looks like the start of a block comment?
 	if (/$hdr_comment_start/) {
-		if (!/^\t*\/\*/) {
-			err("block comment not indented by tabs");
+		if ($config{"indent"} eq "tab") {
+			if (!/^\t*\/\*/) {
+				err("block comment not indented by tabs");
+			}
+		} elsif (!/^ *\/\*/) {
+			err("block comment not indented by spaces");
 		}
 		$in_comment = 1;
 		/^(\s*)\//;
@@ -404,13 +473,24 @@ line: while (<$filehandle>) {
 	#    (!/^    \w/ || $in_function != 0)) {
 	#	err("indent by spaces instead of tabs");
 	#}
-	if (/^ {2,}/ && !/^    [^ ]/) {
-		err("indent by spaces instead of tabs");
+	if ($config{"indent"} eq "tab") {
+		if (/^ {2,}/ && !/^    [^ ]/) {
+			err("indent by spaces instead of tabs");
+		}
+	} elsif (/^\t/) {
+		err("indent by tabs instead of spaces")
+	} elsif (/^( +)/ && !$in_comment) {
+		my $indent = $1;
+		if (length($indent) < $config{"indent"}) {
+			err("indent of " . length($indent) .
+				" space(s) instead of " . $config{'indent'});
+		}
 	}
 	if (/^\t+ [^ \t\*]/ || /^\t+  \S/ || /^\t+   \S/) {
 		err("continuation line not indented by 4 spaces");
 	}
 
+	# A multi-line block comment must not have content on the first line.
 	if (/^\s*\/\*./ && !/^\s*\/\*.*\*\// && !/$hdr_comment_start/) {
 		err("improper first line of block comment");
 	}
@@ -421,14 +501,14 @@ line: while (<$filehandle>) {
 	}
 
 	if ((/[^(]\/\*\S/ || /^\/\*\S/) &&
-	    !(/$lint_re/ || ($splint_comments && /$splint_re/))) {
+	    !(/$lint_re/ || ($config{"splint"} && /$splint_re/))) {
 		err("missing blank after open comment");
 	}
 	if (/\S\*\/[^)]|\S\*\/$/ &&
-	    !(/$lint_re/ || ($splint_comments && /$splint_re/))) {
+	    !(/$lint_re/ || ($config{"splint"} && /$splint_re/))) {
 		err("missing blank before close comment");
 	}
-	if (/\/\/\S/) {		# C++ comments
+	if ($config{"blank-after-start-comment"} && /(?<!\w:)\/\/\S/) {	# C++ comments
 		err("missing blank after start comment");
 	}
 	# check for unterminated single line comments, but allow them when
@@ -455,8 +535,15 @@ line: while (<$filehandle>) {
 	s/\s*$//;
 
 	# following checks do not apply to text in comments.
-	if (/"/) {
-		err("literal string using double-quote instead of single");
+	my $quote = $config{"literal-string-quote"};
+	if ($quote eq "single") {
+		if (/"/) {
+			err("literal string using double-quote instead of single");
+		}
+	} elsif ($quote eq "double") {
+		if (/'/) {
+			err("literal string using single-quote instead of double");
+		}
 	}
 
 	if (/[^=!<>\s][!<>=]=/ || /[^<>!=][!<>=]==?[^\s,=]/ ||
@@ -516,7 +603,8 @@ line: while (<$filehandle>) {
 		$_ = $s;
 	}
 
-	if (/^\s*return\W[^;]*;/ && !/^\s*return\s*\(.*\);/) {
+	if ($config{"unparenthesized-return"} &&
+	    /^\s*return\W[^;]*;/ && !/^\s*return\s*\(.*\);/) {
 		err("unparenthesized return expression");
 	}
 	if (/\btypeof\b/ && !/\btypeof\s*\(.*\)/) {
@@ -561,19 +649,6 @@ line: while (<$filehandle>) {
 		process_indent($_);
 	}
 
-	if ($heuristic) {
-		# cannot check this everywhere due to "struct {\n...\n} foo;"
-		if ($in_function && !$in_declaration &&
-		    /}./ && !/}\s+=/ && !/{.*}[;,]$/ && !/}(\s|)*$/ &&
-		    !/} (else|while)/ && !/}}/) {
-			err("possible bad text following right brace");
-		}
-		# cannot check this because sub-blocks in
-		# the middle of code are ok
-		if ($in_function && /^\s+{/) {
-			err("possible left brace starting a line");
-		}
-	}
 	if (/^\s*else\W/) {
 		if ($prev =~ /^\s*}$/) {
 			err_prefix($prev,
