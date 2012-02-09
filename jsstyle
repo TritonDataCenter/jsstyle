@@ -57,7 +57,6 @@ use strict;
 my $usage =
 "usage: jsstyle [-chvC] [-t <num>] [-o constructs] file ...
 	-c	check continuation indentation inside functions
-	-h	perform heuristic checks that are sometimes wrong
 	-t	specify tab width for line length calculation
 	-v	verbose
 	-C	don't check anything in header block comments
@@ -77,7 +76,6 @@ if (!getopts("cho:t:f:vC", \%opts)) {
 }
 
 my $check_continuation = $opts{'c'};
-my $heuristic = $opts{'h'};
 my $verbose = $opts{'v'};
 my $ignore_hdr_comment = $opts{'C'};
 my $tab_width = $opts{'t'};
@@ -639,19 +637,6 @@ line: while (<$filehandle>) {
 		process_indent($_);
 	}
 
-	if ($heuristic) {
-		# cannot check this everywhere due to "struct {\n...\n} foo;"
-		if ($in_function && !$in_declaration &&
-		    /}./ && !/}\s+=/ && !/{.*}[;,]$/ && !/}(\s|)*$/ &&
-		    !/} (else|while)/ && !/}}/) {
-			err("possible bad text following right brace");
-		}
-		# cannot check this because sub-blocks in
-		# the middle of code are ok
-		if ($in_function && /^\s+{/) {
-			err("possible left brace starting a line");
-		}
-	}
 	if (/^\s*else\W/) {
 		if ($prev =~ /^\s*}$/) {
 			err_prefix($prev,
