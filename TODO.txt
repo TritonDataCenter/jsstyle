@@ -1,3 +1,0 @@
-- Ask dap about dropping the "heuristic" -h option.
-- ./jsstyle -h -> help
-- ./jsstyle -f trent.conf -o doxygen examples/comments.js  # working through this
