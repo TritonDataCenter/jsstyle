@@ -417,8 +417,12 @@ line: while (<$filehandle>) {
 	}
 	# does this looks like the start of a block comment?
 	if (/$hdr_comment_start/) {
-		if (!/^\t*\/\*/) {
-			err("block comment not indented by tabs");
+		if ($config{"indent"} eq "tab") {
+			if (!/^\t*\/\*/) {
+				err("block comment not indented by tabs");
+			}
+		} elsif (!/^ *\/\*/) {
+			err("block comment not indented by spaces");
 		}
 		$in_comment = 1;
 		/^(\s*)\//;
