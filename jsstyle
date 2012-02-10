@@ -561,7 +561,9 @@ line: while (<$filehandle>) {
 			err("missing space around assignment operator");
 		}
 	}
-	if (/[,;]\S/ && !/\bfor \(;;\)/) {
+	if (/[,;]\S/ && !/\bfor \(;;\)/ &&
+	    # Allow a comma in a regex quantifier.
+	    !/\/.*?\{\d+,?\d*\}.*?\//) {
 		err("comma or semicolon followed by non-blank");
 	}
 	# allow "for" statements to have empty "while" clauses
@@ -620,7 +622,9 @@ line: while (<$filehandle>) {
 	if (/^\s*\(void\)[^ ]/) {
 		err("missing space after (void) cast");
 	}
-	if (/\S{/ && !/({|\(){/) {
+	if (/\S{/ && !/({|\(){/ &&
+	    # Allow a brace in a regex quantifier.
+	    !/\/.*?\{\d+,?\d*\}.*?\//) {
 		err("missing space before left brace");
 	}
 	if ($in_function && /^\s+{/ &&

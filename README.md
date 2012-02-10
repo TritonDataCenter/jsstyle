@@ -62,6 +62,22 @@ configurability.
                             "missing blank after start comment" check.
 
 
+## "JSSTYLED"-comments
+
+When you want `jsstyle` to ignore a line, you can use this:
+
+    /* JSSTYLED */
+    ignore = this + line;
+
+Or for a block:
+
+    /* BEGIN JSSTYLED */
+    var here
+      , be
+      , some = funky
+      , style
+    /* END JSSTYLED */
+
 
 ## License
 
