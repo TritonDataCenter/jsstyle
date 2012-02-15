@@ -108,7 +108,8 @@ my %config = (
 	"literal-string-quote" => "single",  # 'single' or 'double'
 	"blank-after-start-comment" => 1,
 	"continuation-at-front" => 0,
-	"right-paren-ok" => 0
+	"leading-right-paren-ok" => 0,
+	"strict-indent" => 0
 );
 sub add_config_var ($$) {
 	my ($scope, $str) = @_;
@@ -131,7 +132,8 @@ sub add_config_var ($$) {
 		 $name eq "splint" ||
 		 $name eq "unparenthesized-return" ||
 		 $name eq "continuation-at-front" ||
-		 $name eq "right-paren-ok" ||
+		 $name eq "leading-right-paren-ok" ||
+		 $name eq "strict-indent" ||
 		 $name eq "blank-after-start-comment") {
 
 		if ($value != 1 && $value != 0) {
@@ -489,7 +491,8 @@ line: while (<$filehandle>) {
 		if (length($indent) < $config{"indent"}) {
 			err("indent of " . length($indent) .
 				" space(s) instead of " . $config{"indent"});
-		} elsif (length($indent) % $config{"indent"} != 0) {
+		} elsif ($config{"strict-indent"} &&
+			length($indent) % $config{"indent"} != 0) {
 			err("indent is " . length($indent) .
 				" not a multiple of " . $config{'indent'} . " spaces");
 		}
@@ -586,7 +589,9 @@ line: while (<$filehandle>) {
 	if (/\S   *(&&|\|\|)/ || /(&&|\|\|)   *\S/) {
 		err("more than one space around boolean operator");
 	}
-	if (/\s(delete|typeof|instanceOf|throw|with|catch|new|function|in|for|if|while|switch|return|case)\(/) {
+	# We allow methods which look like obj.delete() but not keywords without
+	# spaces ala: delete(obj)
+	if (/(?<!\.)\b(delete|typeof|instanceof|throw|with|catch|new|function|in|for|if|while|switch|return|case)\(/) {
 		err("missing space between keyword and paren");
 	}
 	if (/(\b(catch|for|if|with|while|switch|return)\b.*){2,}/) {
@@ -627,7 +632,7 @@ line: while (<$filehandle>) {
 	}
 	# allow "for" statements to have empty "continue" clauses
 	if (/\s\)/ && !/^\s*for \([^;]*;[^;]*; \)/) {
-		if ($config{"right-paren-ok"} && /^\s+\)/) {
+		if ($config{"leading-right-paren-ok"} && /^\s+\)/) {
 			# this is allowed
 		} else {
 			err("whitespace before right paren");
