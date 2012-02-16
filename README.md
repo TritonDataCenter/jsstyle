@@ -53,6 +53,8 @@ configurability.
                             This is legacy. Does anyone use this?
     indent=<NUM|tab>        An integer number of spaces for indentation, or
                             'tab' for tab indentation (the default).
+    strict-indent           Boolean option, set to 1 to force indents of spaces
+                            to be a multiple of indent parameter.
     literal-string-quote    'single' (the default) or 'double'. Specifies
                             the preferred quote character for literal strings.
     unparenthesized-return  Boolean option, set to 0 to disable the
@@ -60,7 +62,10 @@ configurability.
     blank-after-start-comment
                             Boolean option, set to 0 to disable the
                             "missing blank after start comment" check.
-
+    continuation-at-front   Boolean option, set to 1 to force continations
+                            to be at the beginning rather than end of line.
+    leading-right-paren-ok  Boolean option, set to 1 to allow ) to start a
+                            line.
 
 ## "JSSTYLED"-comments
 
