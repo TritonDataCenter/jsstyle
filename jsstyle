@@ -133,6 +133,9 @@ sub add_config_var ($$) {
 		 $name eq "unparenthesized-return" ||
 		 $name eq "continuation-at-front" ||
 		 $name eq "leading-right-paren-ok" ||
+		 $name eq "leading-comma-ok" ||
+		 $name eq "uncuddled-else-ok" ||
+		 $name eq "whitespace-after-left-paren-ok" ||
 		 $name eq "strict-indent" ||
 		 $name eq "blank-after-start-comment") {
 
@@ -577,9 +580,14 @@ line: while (<$filehandle>) {
 	    !/\/.*?\{\d+,?\d*\}.*?\//) {
 		err("comma or semicolon followed by non-blank");
 	}
+	# check for commas preceded by blanks
+	if ((!$config{"leading-comma-ok"} && /^\s*,/) || (!/^\s*,/ && /\s,/)) {
+		err("comma preceded by blank");
+	}
+	# check for semicolons preceded by blanks
 	# allow "for" statements to have empty "while" clauses
-	if (/\s[,;]/ && !/^[\t]+;$/ && !/^\s*for \([^;]*; ;[^;]*\)/) {
-		err("comma or semicolon preceded by blank");
+	if (/\s;/ && !/^[\t]+;$/ && !/^\s*for \([^;]*; ;[^;]*\)/) {
+		err("semicolon preceded by blank");
 	}
 	if (!$config{"continuation-at-front"} && /^\s*(&&|\|\|)/) {
 		err("improper boolean continuation");
@@ -627,7 +635,7 @@ line: while (<$filehandle>) {
 	if (/\btypeof\b/ && !/\btypeof\s*\(.*\)/) {
 		err("unparenthesized typeof expression");
 	}
-	if (/\(\s/) {
+	if (!$config{"whitespace-after-left-paren-ok"} && /\(\s/) {
 		err("whitespace after left paren");
 	}
 	# allow "for" statements to have empty "continue" clauses
@@ -673,7 +681,7 @@ line: while (<$filehandle>) {
 	}
 
 	if (/^\s*else\W/) {
-		if ($prev =~ /^\s*}$/) {
+		if (!$config{"uncuddled-else-ok"} && $prev =~ /^\s*}$/) {
 			err_prefix($prev,
 			    "else and right brace should be on same line");
 		}
