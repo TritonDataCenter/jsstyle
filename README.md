@@ -67,6 +67,16 @@ configurability.
     leading-right-paren-ok  Boolean option, set to 1 to allow ) to start a
                             line.
 
+    whitespace-after-left-paren-ok
+                            Boolean option, allow whitespace after a (
+                            character.
+
+    leading-comma-ok        Boolean option to allow lines to begin with commas
+                            (preceded by whitespace).
+
+    uncuddled-else-ok       Boolean option to allow for an else block to begin
+                            on a new line.
+
 ## "JSSTYLED"-comments
 
 When you want `jsstyle` to ignore a line, you can use this:
