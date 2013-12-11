@@ -108,7 +108,7 @@ my %config = (
 	"literal-string-quote" => "single",  # 'single' or 'double'
 	"blank-after-start-comment" => 1,
 	"blank-after-open-comment" => 1,
-    "no-blank-for-anon-function" => 0,
+	"no-blank-for-anon-function" => 0,
 	"continuation-at-front" => 0,
 	"leading-right-paren-ok" => 0,
 	"strict-indent" => 0
@@ -141,7 +141,7 @@ sub add_config_var ($$) {
 		 $name eq "strict-indent" ||
 		 $name eq "blank-after-open-comment" ||
 		 $name eq "blank-after-start-comment" ||
-         $name eq "no-blank-for-anon-function") {
+		 $name eq "no-blank-for-anon-function") {
 
 		if ($value != 1 && $value != 0) {
 			die "$scope: invalid '$name': don't give a value";
