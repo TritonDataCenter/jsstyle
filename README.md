@@ -65,6 +65,9 @@ configurability.
     blank-after-open-comment
                             Boolean option, set to 0 to disable the
                             "missing blank after open comment" check. `/* */`
+    no-blank-for-anon-function
+                            Boolean option, set to 1 to allow anonymous
+                            functions without blank before paren. `function() { ... }`
     continuation-at-front   Boolean option, set to 1 to force continations
                             to be at the beginning rather than end of line.
     leading-right-paren-ok  Boolean option, set to 1 to allow ) to start a
