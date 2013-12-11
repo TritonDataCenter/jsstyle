@@ -55,6 +55,8 @@ configurability.
                             'tab' for tab indentation (the default).
     strict-indent           Boolean option, set to 1 to force indents of spaces
                             to be a multiple of indent parameter.
+    line-length             An integer number to specify the maximum length
+                            of a line (default: 80)
     literal-string-quote    'single' (the default) or 'double'. Specifies
                             the preferred quote character for literal strings.
     unparenthesized-return  Boolean option, set to 0 to disable the
