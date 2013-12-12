@@ -102,6 +102,7 @@ if (! defined($opts{'t'})) {
 # Load config
 my %config = (
 	indent => "tab",
+	"line-length" => 80,
 	doxygen => 0,  	# doxygen comments: /** ... */
 	splint => 0,    # splint comments. Needed?
 	"unparenthesized-return" => 1,
@@ -128,6 +129,10 @@ sub add_config_var ($$) {
 		if ($value !~ /^\d+$/ && $value ne "tab") {
 			die "$scope: invalid '$name': must be a number (of ".
 				"spaces) or 'tab'";
+		}
+	} elsif ($name eq "line-length") { # numeric vars
+		if ($value !~ /^\d+$/) {
+			die "$scope: invalid '$name': must be a number";
 		}
 	} elsif ($name eq "doxygen" ||   # boolean vars
 		 $name eq "splint" ||
@@ -354,15 +359,15 @@ line: while (<$filehandle>) {
 
 	# check length of line.
 	# first, a quick check to see if there is any chance of being too long.
-	if ((($line =~ tr/\t/\t/) * ($tab_width - 1)) + length($line) > 80) {
+	if ((($line =~ tr/\t/\t/) * ($tab_width - 1)) + length($line) > $config{"line-length"}) {
 		# yes, there is a chance.
 		# replace tabs with spaces and check again.
 		my $eline = $line;
 		1 while $eline =~
 		    s/\t+/' ' x
 			(length($&) * $tab_width - length($`) % $tab_width)/e;
-		if (length($eline) > 80) {
-			err("line > 80 characters");
+		if (length($eline) > $config{"line-length"}) {
+			err("line > " . $config{"line-length"} . " characters");
 		}
 	}
 
