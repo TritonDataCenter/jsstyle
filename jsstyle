@@ -130,7 +130,7 @@ sub add_config_var ($$) {
 			die "$scope: invalid '$name': must be a number (of ".
 				"spaces) or 'tab'";
 		}
-	} elsif ($name eq "line-length") { # nummeric vars
+	} elsif ($name eq "line-length") { # numeric vars
 		if ($value !~ /^\d+$/) {
 			die "$scope: invalid '$name': must be a number";
 		}
