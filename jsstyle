@@ -109,6 +109,7 @@ my %config = (
 	"literal-string-quote" => "single",  # 'single' or 'double'
 	"blank-after-start-comment" => 1,
 	"blank-after-open-comment" => 1,
+	"no-blank-for-anon-function" => 0,
 	"continuation-at-front" => 0,
 	"leading-right-paren-ok" => 0,
 	"strict-indent" => 0
@@ -144,7 +145,8 @@ sub add_config_var ($$) {
 		 $name eq "whitespace-after-left-paren-ok" ||
 		 $name eq "strict-indent" ||
 		 $name eq "blank-after-open-comment" ||
-		 $name eq "blank-after-start-comment") {
+		 $name eq "blank-after-start-comment" ||
+		 $name eq "no-blank-for-anon-function") {
 
 		if ($value != 1 && $value != 0) {
 			die "$scope: invalid '$name': don't give a value";
@@ -606,7 +608,12 @@ line: while (<$filehandle>) {
 	}
 	# We allow methods which look like obj.delete() but not keywords without
 	# spaces ala: delete(obj)
-	if (/(?<!\.)\b(delete|typeof|instanceof|throw|with|catch|new|function|in|for|if|while|switch|return|case)\(/) {
+	if (!$config{"no-blank-for-anon-function"} && /(?<!\.)\bfunction\(/) {
+		err("missing space between 'function' and paren");
+	} elsif ($config{"no-blank-for-anon-function"} && /(?<!\.)\bfunction\s+\(/) {
+		err("space between 'function' and paren");
+	}
+	if (/(?<!\.)\b(delete|typeof|instanceof|throw|with|catch|new|in|for|if|while|switch|return|case)\(/) {
 		err("missing space between keyword and paren");
 	}
 	if (/(\b(catch|for|if|with|while|switch|return)\b.*){2,}/) {
