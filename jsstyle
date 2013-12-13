@@ -605,6 +605,8 @@ line: while (<$filehandle>) {
 	# spaces ala: delete(obj)
 	if (!$config{"no-blank-for-anon-function"} && /(?<!\.)\bfunction\(/) {
 		err("missing space between 'function' and paren");
+	} elsif ($config{"no-blank-for-anon-function"} && /(?<!\.)\bfunction\s+\(/) {
+		err("space between 'function' and paren");
 	}
 	if (/(?<!\.)\b(delete|typeof|instanceof|throw|with|catch|new|in|for|if|while|switch|return|case)\(/) {
 		err("missing space between keyword and paren");
