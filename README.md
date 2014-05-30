@@ -9,7 +9,7 @@ configurable. However it strives to enforces a single coding style based on
 that cstyle. See "Configuration Options" below.
 
 The original cstyle tool can be found here:
-<http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/tools/scripts/cstyle.pl>
+<https://github.com/illumos/illumos-gate/blob/master/usr/src/tools/scripts/cstyle.pl>
 
 The document describing C Style is available here:
 <http://www.cis.upenn.edu/~lee/06cse480/data/cstyle.ms.pdf>
@@ -30,7 +30,8 @@ Examples of conditions checked by this tool include:
 
 ## Status
 
-No known bugs.  No new features planned.
+No new features planned.  The biggest known issue is that jsstyle doesn't grok
+regexes, so you usually need to wrap these in JSSTYLED comments (see below).
 
 
 ## Usage
