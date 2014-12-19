@@ -600,7 +600,7 @@ line: while (<$filehandle>) {
 	}
 	if (!$config{"continuation-at-front"} && /^\s*(&&|\|\|)/) {
 		err("improper boolean continuation");
-	} elsif ($config{"continuation-at-front"} && /(&&|\|\||\+)$/) {
+	} elsif ($config{"continuation-at-front"} && /(&&|\|\||[^+]\+)$/) {
 		err("improper continuation");
 	}
 	if (/\S   *(&&|\|\|)/ || /(&&|\|\|)   *\S/) {
