@@ -23,7 +23,7 @@
 # Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
-# Copyright 2011 Joyent, Inc. All rights reserved.
+# Copyright 2016 Joyent, Inc. All rights reserved.
 #
 # jsstyle - check for some common stylistic errors.
 #
@@ -218,7 +218,7 @@ my $err_stat = 0;		# exit status
 
 if ($#ARGV >= 0) {
 	foreach my $arg (@ARGV) {
-		my $fh = new IO::File $arg, "r";
+		open(my $fh, "<:encoding(UTF-8)", $arg);
 		if (!defined($fh)) {
 			printf "%s: cannot open\n", $arg;
 		} else {
