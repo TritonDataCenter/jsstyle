@@ -23,7 +23,7 @@
 # Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
-# Copyright 2016 Joyent, Inc. All rights reserved.
+# Copyright 2017 Joyent, Inc. All rights reserved.
 #
 # jsstyle - check for some common stylistic errors.
 #
@@ -307,6 +307,15 @@ line: while (<$filehandle>) {
 	#
 	s/'([^\\']|\\.)*'/\'\'/g;
 	s/"([^\\"]|\\.)*"/\"\"/g;
+
+	#
+	# Strip out contents of easily identifiable regular expressions so that
+	# they don't trip us up. We only modify those that start with '^' or end
+	# with '$' since these are unlikely to be confused with other legitimate
+	# uses of '/' (such as division or comments).
+	#
+	s!/\^([^\\/]|\\.)*/!/ /!g;
+	s!/([^\\/]|\\.)*\$/!/ /!g;
 
 	#
 	# detect string continuation
