@@ -58,8 +58,8 @@ my $usage =
 "Usage: jsstyle [-h?vcC] [-t <num>] [-f <path>] [-o <config>] file ...
 
 Check your JavaScript file for style.
-See <https://github.com/davepacheco/jsstyle> for details on config options.
-Report bugs to <https://github.com/davepacheco/jsstyle/issues>.
+See <https://github.com/joyent/jsstyle> for details on config options.
+Report bugs to <https://github.com/joyent/jsstyle/issues>.
 
 Options:
 	-h 	print this help and exit
